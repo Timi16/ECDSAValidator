@@ -6,6 +6,7 @@ import "solady/utils/ECDSA.sol";
 import "src/utils/KernelHelper.sol";
 import "src/interfaces/IValidator.sol";
 import "src/common/Types.sol";
+import {PackedUserOperation} from "account-abstraction/interfaces/PackedUserOperation.sol";
 
 struct ECDSAValidatorStorage {
     address owner;
@@ -27,7 +28,7 @@ contract ECDSAValidator is IKernelValidator {
         emit OwnerChanged(msg.sender, oldOwner, owner);
     }
 
-    function validateUserOp(UserOperation calldata _userOp, bytes32 _userOpHash, uint256)
+    function validateUserOp(PackedUserOperation calldata _userOp, bytes32 _userOpHash, uint256)
         external
         payable
         override
