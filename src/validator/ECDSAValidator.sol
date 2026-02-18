@@ -1,5 +1,4 @@
 // SPDX-License-Identifier: MIT
-
 pragma solidity ^0.8.0;
 
 import "solady/utils/ECDSA.sol";
@@ -17,15 +16,28 @@ contract ECDSAValidator is IKernelValidator {
 
     mapping(address => ECDSAValidatorStorage) public ecdsaValidatorStorage;
 
-    function disable(bytes calldata) external payable override {
+    // ── v3 interface (called by Kernel during initialize) ──
+    function onInstall(bytes calldata _data) external payable {
+        address owner = address(bytes20(_data[0:20]));
+        address oldOwner = ecdsaValidatorStorage[msg.sender].owner;
+        ecdsaValidatorStorage[msg.sender].owner = owner;
+        emit OwnerChanged(msg.sender, oldOwner, owner);
+    }
+
+    function onUninstall(bytes calldata) external payable {
         delete ecdsaValidatorStorage[msg.sender];
     }
 
+    // ── keep old interface too for compatibility ──
     function enable(bytes calldata _data) external payable override {
         address owner = address(bytes20(_data[0:20]));
         address oldOwner = ecdsaValidatorStorage[msg.sender].owner;
         ecdsaValidatorStorage[msg.sender].owner = owner;
         emit OwnerChanged(msg.sender, oldOwner, owner);
+    }
+
+    function disable(bytes calldata) external payable override {
+        delete ecdsaValidatorStorage[msg.sender];
     }
 
     function validateUserOp(PackedUserOperation calldata _userOp, bytes32 _userOpHash, uint256)
@@ -57,7 +69,7 @@ contract ECDSAValidator is IKernelValidator {
         return ValidationData.wrap(0);
     }
 
-    function validCaller(address _caller, bytes calldata) external view override returns (bool) {
+    function validCaller(address _caller, bytes calldata) external view returns (bool) {
         return ecdsaValidatorStorage[msg.sender].owner == _caller;
     }
 }
